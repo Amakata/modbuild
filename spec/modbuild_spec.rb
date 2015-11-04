@@ -6,18 +6,20 @@ describe Modbuild::Base, '#get_package_files' do
   it "should extract variables from comments" do
     pkg = Modbuild::Base.new File.dirname(__FILE__) + '/fixtures/001_variables'
     pkg.get_package_files
-    
+
     pkg.package_name.should eq 'My Magento Extension'
     pkg.package_version.should eq '1.0.1'
     pkg.package_summary.should eq 'My extension summary'
     pkg.package_description.should eq 'My extension description'
+    pkg.package_license.should eq 'My License'
+    pkg.package_license_url.should eq 'http://example.com/'
   end
 end
 
 describe Modbuild::PackageXml, '#identify_file' do
   it "should identify file targets" do
     pkgxml = Modbuild::PackageXml.new 'a', 'b', 'c', 'd'
-    
+
     pkgxml.identify_file('app/code/local/Meanbee/Awesome')[:target].should eq 'magelocal'
     pkgxml.identify_file('app/code/community/Meanbee/Awesome')[:target].should eq 'magecommunity'
     pkgxml.identify_file('app/code/core/Meanbee/Awesome')[:target].should eq 'magecore'
@@ -26,10 +28,10 @@ describe Modbuild::PackageXml, '#identify_file' do
     pkgxml.identify_file('skin/frontend/base/default/css/awesome.css')[:target].should eq 'mageskin'
     pkgxml.identify_file('random/directory/file.css')[:target].should eq 'mageweb'
   end
-  
+
   it "should differentiate between files and directories" do
     pkgxml = Modbuild::PackageXml.new 'a', 'b', 'c', 'd'
-    
+
     pkgxml.identify_file('app/code/local/Meanbee/Awesome')[:type].should eq 'dir'
     pkgxml.identify_file('app/code/local/Meanbee/Awesome/')[:type].should eq 'dir'
     pkgxml.identify_file('app/code/local/Meanbee/Awesome/etc/config.xml')[:type].should eq 'file'
@@ -39,10 +41,10 @@ describe Modbuild::PackageXml, '#identify_file' do
     pkgxml.identify_file('app/code/local/Meanbee/Awesome/etc/.htaccess/subdir/file.txt')[:type].should eq 'file'
     pkgxml.identify_file('.htaccess')[:type].should eq 'file'
   end
-  
+
   it "should provide file paths relative to target base directories" do
     pkgxml = Modbuild::PackageXml.new 'a', 'b', 'c', 'd'
-    
+
     pkgxml.identify_file('app/code/local/Meanbee/Awesome')[:path].should eq 'Meanbee/Awesome'
     pkgxml.identify_file('app/code/community/Meanbee/Awesome')[:path].should eq 'Meanbee/Awesome'
     pkgxml.identify_file('app/code/core/Meanbee/Awesome')[:path].should eq 'Meanbee/Awesome'

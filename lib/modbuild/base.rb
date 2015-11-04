@@ -2,44 +2,52 @@ require 'logger'
 
 module Modbuild
   class Base
-    attr_accessor :package_name, :package_version, :package_summary, :package_description
-    
+    attr_accessor :package_name, :package_version, :package_summary, :package_description, :package_license, :package_license_uri
+
     def initialize(module_directory)
       @logger = Logger.new(STDERR)
       @logger.level = Logger::FATAL
-      
+
       @module_location = module_directory
       @modman_location = File.join(module_directory, 'modman')
       @magento_location = File.join(module_directory, '..', '..')
-      
+
       @package_name = 'Unspecified_Name'
       @package_version = '1.0.0'
       @package_summary = 'Unspecified package summary'
       @package_description = 'Unspecified package description'
+      @package_license = 'Open Software License v3.0 (OSL-3.0)'
+      @package_license_uri = 'http://opensource.org/licenses/OSL-3.0'
+
+      @authors = []
       @package_files = []
     end
-    
+
     def enable_debug
       @logger.level = Logger::DEBUG
     end
-    
+
     def build
       @logger.debug "Module Directory: #{@module_location}"
       @logger.debug "Modman Directory: #{@modman_location}"
       @logger.debug "Magento Directory: #{@magento_location}"
-      
+
       get_package_files
-      
+
       @logger.debug 'Generating XML file..'
-      package_xml = PackageXml.new @package_name, @package_version, @package_summary, @package_description
-      
+      package_xml = PackageXml.new @package_name, @package_version, @package_summary, @package_description, @package_license, @package_license_uri
+
+      @authors.each do |author|
+        package_xml.add_author author[0], author[1], author[2]
+      end
+
       @package_files.each do |file|
         package_xml.add_file file
       end
-      
+
       return package_xml.to_string
     end
-    
+
     def get_package_files
       # List all of the files related to this module, base on the modman contents
       modman_file = File.new @modman_location, 'r'
@@ -47,12 +55,12 @@ module Modbuild
       @logger.debug "Reading modman file"
       while (line = modman_file.gets)
         line.chomp!
-        
+
         if (line =~ /^\s*#/)
           @logger.debug "  Comment line: #{line}"
           if (/^#\s*(?<key>\w+)\s*:\s*(?<value>.*)$/ =~ line)
             @logger.debug "    Extracted: #{key} = #{value}"
-            
+
             case key.downcase.to_sym
               when :name
                 @package_name = value
@@ -62,6 +70,12 @@ module Modbuild
                 @package_summary = value
               when :description
                 @package_description = value
+              when :license
+                @package_license= value
+              when :license_uri
+                @package_license_uri = value
+              when :author
+                @authors.push value.split(',')
               else
                 @logger.debug "      Unknown package variables"
             end
@@ -96,9 +110,9 @@ module Modbuild
           end
         end
       end
-      
+
       modman_file.close
-      
+
       return @package_files
     end
   end

@@ -2,12 +2,12 @@ require 'builder'
 
 module Modbuild
   class PackageXml
-    def initialize(name, version, summary, description)
+    def initialize(name, version, summary, description, license, license_uri)
       @php_min = '5.2.0'
       @php_max = '6.0.0'
       @stability = 'stable'
-      @license = 'Open Software License v3.0 (OSL-3.0)'
-      @license_uri = 'http://opensource.org/licenses/OSL-3.0'
+      @license = license
+      @license_uri = license_uri
       @name = name
       @channel = 'community'
       @summary = summary
@@ -17,10 +17,10 @@ module Modbuild
       @depends_packages = []
       @depends_extensions = []
       @files = []
-      
+
       add_extension_dependency 'Core', '', ''
     end
-    
+
     def add_author(name, user, email)
       @authors << {
         :name => name,
@@ -28,7 +28,7 @@ module Modbuild
         :email => email
       }
     end
-    
+
     def add_package_dependency(name, channel, min, max, files)
       @depends_packages << {
         :name => name,
@@ -38,7 +38,7 @@ module Modbuild
         :files => files
       }
     end
-    
+
     def add_extension_dependency(name, min, max)
       @depends_extensions << {
         :name => name,
@@ -46,14 +46,14 @@ module Modbuild
         :max => max
       }
     end
-    
+
     def add_file(name)
       @files << identify_file(name)
     end
-    
+
     def to_string
       xml = Builder::XmlMarkup.new(:indent => 4)
-      
+
       xml._ {
         xml.form_key "imtotallyirrelevant"
         xml.name @name
@@ -97,7 +97,7 @@ module Modbuild
               end
             end
           }
-          
+
           xml.extension {
             [:name, :min, :max].each do |key|
               @depends_extensions.each do |pkg|
@@ -125,10 +125,10 @@ module Modbuild
           end
         }
       }
-       
+
       return xml.target!
     end
-    
+
     def identify_file(name)
       targets = {
         :magelocal     => 'app/code/local',
@@ -139,9 +139,9 @@ module Modbuild
         :mageskin      => 'skin'
         # :mageweb is for everything else
       }
-      
+
       file_type = (name =~ /\w*\.\w+$/) ? 'file' : 'dir'
-      
+
       targets.each do |key, value|
         if name =~ /^#{value}/
           return {
@@ -151,7 +151,7 @@ module Modbuild
           }
         end
       end
-      
+
       return {
         :target => 'mageweb',
         :path => name,
